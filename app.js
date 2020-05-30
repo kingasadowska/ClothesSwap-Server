@@ -22,7 +22,7 @@ app.use((error, req, res, next) => {
     return next(error);
   }
   res.status(error.code || 500)
-  res.json({text: error.text || 'Error!'});
+  res.json({text: error.text || 'Error! Not found'});
 });
 
 app.listen(5000);

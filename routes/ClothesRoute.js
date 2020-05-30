@@ -1,17 +1,37 @@
 const express = require('express');
-
+const { check } = require('express-validator');
 const clothesControllers = require('../controllers/ClothesController');
 
 const router = express.Router();
 
-router.get('/:pid', clothesControllers.getClothesById);
+router.get('/:cid', clothesControllers.getClothesById);
 
 router.get('/user/:uid', clothesControllers.getClothesByUserId);
 
-router.post('/', clothesControllers.createClothes);
+router.post('/', 
+[
+    check('title')
+      .not()
+      .isEmpty(),
+    check('description').isLength({ min: 5 }),
+    check('size')
+      .not()
+      .isEmpty()
+  ],
+ clothesControllers.createClothes
+);
 
-router.patch('/:pid', clothesControllers.updateClothes);
+router.patch(
+    '/:cid', 
+    [
+        check('title')
+          .not()
+          .isEmpty(),
+        check('description').isLength({ min: 6 })
+    ],
+    clothesControllers.updateClothes
+);
 
-router.delete('/:pid', clothesControllers.deleteClothes);
+router.delete('/:cid', clothesControllers.deleteClothes);
 
 module.exports = router;

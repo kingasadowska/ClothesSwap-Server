@@ -1,10 +1,11 @@
 const uuid = require('uuid/v4');
+const { validationResult } = require('express-validator');
 
 const HttpError = require('../models/HttpErrors');
 
 let SAMPLE_CLOTHES = [
   {
-    id: 'p1',
+    id: 'c1',
     title: 'Dress',
     description: 'short yellow',
     imageUrl: 'https://content.asos-media.com/-/media/homepages/ww/2020/05/11/ww_global_mobile-hero_1650-x-1884_4th-may.jpg',
@@ -19,10 +20,10 @@ let SAMPLE_CLOTHES = [
 ];
 
 const getClothesById = (req, res, next) => {
-  const clothesId = req.params.pid;
+  const clothesId = req.params.cid;
 
-  const clothes = SAMPLE_CLOTHES.find(p => {
-    return p.id === clothesId;
+  const clothes = SAMPLE_CLOTHES.find(c=> {
+    return c.id === clothesId;
   });
 
   if (!clothes) {
@@ -35,8 +36,8 @@ const getClothesById = (req, res, next) => {
 const getClothesByUserId = (req, res, next) => {
   const userId = req.params.uid;
 
-  const clothes = SAMPLE_CLOTHES.filter(p => {
-    return p.creator === userId;
+  const clothes = SAMPLE_CLOTHES.filter(c=> {
+    return c.creator === userId;
   });
 
   if (!clothes || clothes.length === 0) {
@@ -49,13 +50,20 @@ const getClothesByUserId = (req, res, next) => {
 };
 
 const createClothes = (req, res, next) => {
-  const { title, size, description, price, coordinates } = req.body;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new HttpError('Check inputs, Invalid data detected.', 422);
+  }
+
+  const { title, description, imageUrl, size, price, coordinates, creator } = req.body;
+ 
   const createdClothes = {
     id: uuid(),
     title,
+    description,
+    imageUrl,
     size,
     price,
-    description,
     location: coordinates,
     creator
   };
@@ -66,13 +74,19 @@ const createClothes = (req, res, next) => {
 };
 
 const updateClothes = (req, res, next) => {
-  const { title, description } = req.body;
-  const clothesId = req.params.pid;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new HttpError('Invalid inputs passed, please check your data.', 422);
+  }
 
-  const updatedClothes = { ...SAMPLE_CLOTHES.find(p => p.id === clothesId) };
-  const clothesIndex = SAMPLE_CLOTHES.findIndex(p => p.id === clothesId);
+  const { title, description, size } = req.body;
+  const clothesId = req.params.cid;
+
+  const updatedClothes = { ...SAMPLE_CLOTHES.find(c=>c.id === clothesId) };
+  const clothesIndex = SAMPLE_CLOTHES.findIndex(c=>c.id === clothesId);
   updatedClothes.title = title;
   updatedClothes.description = description;
+  updatedClothes.size = size;
 
   SAMPLE_CLOTHES[clothesIndex] = updatedClothes;
 
@@ -80,8 +94,11 @@ const updateClothes = (req, res, next) => {
 };
 
 const deleteClothes = (req, res, next) => {
-  const clothesId = req.params.pid;
-  SAMPLE_CLOTHES = SAMPLE_CLOTHES.filter(p => p.id !== clothesId);
+  const clothesId = req.params.c.id;
+  if (!SAMPLE_CLOTHES.find(c => c.id === clothesId)) {
+    throw new HttpError('Could not find a clothes for that id.', 404);
+  }
+  SAMPLE_CLOTHES = SAMPLE_CLOTHES.filter(c =>c.id !== clothesId);
   res.status(200).json({ text: 'Deleted clothes.' });
 };
 
