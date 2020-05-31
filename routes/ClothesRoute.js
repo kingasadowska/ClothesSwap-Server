@@ -16,6 +16,9 @@ router.post('/',
     check('description').isLength({ min: 5 }),
     check('size')
       .not()
+      .isEmpty(),
+    check('address')
+      .not()
       .isEmpty()
   ],
  clothesControllers.createClothes

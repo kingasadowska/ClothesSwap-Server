@@ -2,6 +2,7 @@ const uuid = require('uuid/v4');
 const { validationResult } = require('express-validator');
 
 const HttpError = require('../models/HttpErrors');
+const getCoordination = require('../util/location');
 
 let SAMPLE_CLOTHES = [
   {
@@ -15,7 +16,8 @@ let SAMPLE_CLOTHES = [
       lat: 30.7387491,
       lng: -52.6871527
     },
-    creator: 'u1'
+    creator: 'u1',
+    address: '40th St, Boston, NY 20300'
   }
 ];
 
@@ -49,14 +51,21 @@ const getClothesByUserId = (req, res, next) => {
   res.json({ clothes });
 };
 
-const createClothes = (req, res, next) => {
+const createClothes = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    throw new HttpError('Check inputs, Invalid data detected.', 422);
+    next(new HttpError('Check inputs, Invalid data detected.', 422));
   }
 
-  const { title, description, imageUrl, size, price, coordinates, creator } = req.body;
+  const { title, description, imageUrl, size, price, creator, address } = req.body;
  
+  let coordinates;
+  try {
+    coordinates = await getCoordination(address);
+  } catch (error) {
+    return next(error);
+  }
+  
   const createdClothes = {
     id: uuid(),
     title,
@@ -65,7 +74,8 @@ const createClothes = (req, res, next) => {
     size,
     price,
     location: coordinates,
-    creator
+    creator,
+    address
   };
 
   SAMPLE_CLOTHES.push(createdClothes);
