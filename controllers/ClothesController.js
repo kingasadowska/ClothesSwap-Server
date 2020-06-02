@@ -3,6 +3,7 @@ const { validationResult } = require('express-validator');
 
 const HttpError = require('../models/HttpErrors');
 const getCoordination = require('../util/location');
+const Clothes = require('../models/clothes');
 
 let SAMPLE_CLOTHES = [
   {
@@ -11,7 +12,7 @@ let SAMPLE_CLOTHES = [
     description: 'short yellow',
     imageUrl: 'https://content.asos-media.com/-/media/homepages/ww/2020/05/11/ww_global_mobile-hero_1650-x-1884_4th-may.jpg',
     size: 'S',
-    price: '15 $',
+    price: 15,
     location: {
       lat: 30.7387491,
       lng: -52.6871527
@@ -66,19 +67,25 @@ const createClothes = async (req, res, next) => {
     return next(error);
   }
   
-  const createdClothes = {
-    id: uuid(),
+  const createdClothes = new Clothes({
     title,
     description,
-    imageUrl,
+    imageUrl: 'https://content.asos-media.com/-/media/homepages/ww/2020/05/11/ww_global_mobile-hero_1650-x-1884_4th-may.jpg',
     size,
     price,
     location: coordinates,
     creator,
     address
-  };
+  });
 
-  SAMPLE_CLOTHES.push(createdClothes);
+ try {
+   await createClothes.save();
+ } catch (err) {
+   const error = new HttpError(
+     'Creating clothes failes!', 500
+     );
+     return next(error);
+ }
 
   res.status(201).json({ clothes: createdClothes });
 };

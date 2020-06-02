@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 
 const clothesRoutes = require('./routes/ClothesRoute');
 const usersRoutes = require('./routes/UsersRoute');
@@ -25,4 +26,11 @@ app.use((error, req, res, next) => {
   res.json({text: error.text || 'Error! Not found'});
 });
 
-app.listen(5000);
+mongoose
+  .connect('mongodb+srv://admin1:12345@cluster0-aqvmj.mongodb.net/clothes?retryWrites=true&w=majority')
+  .then(() => {
+    app.listen(5000);
+  })
+  .catch(err => {
+    console.log(err);
+  });
