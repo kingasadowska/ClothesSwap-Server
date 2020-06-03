@@ -23,11 +23,11 @@ app.use((error, req, res, next) => {
     return next(error);
   }
   res.status(error.code || 500)
-  res.json({text: error.text || 'Error! Not found'});
+  res.json({message: error.message || 'Error! Not found'});
 });
 
 mongoose
-  .connect('mongodb+srv://admin1:12345@cluster0-aqvmj.mongodb.net/clothes?retryWrites=true&w=majority')
+  .connect('mongodb+srv://admin1:12345@cluster0-mudkp.mongodb.net/clothes?retryWrites=true&w=majority')
   .then(() => {
     app.listen(5000);
   })
