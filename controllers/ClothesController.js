@@ -172,7 +172,7 @@ const createClothes = async (req, res, next) => {
     
     let clothes;
     try {
-      clothes = await Clothes.findById(clothesId);
+      clothes = await Clothes.findById(clothesId).populate('creator');
     } catch (err) {
       const error = new HttpError(
         'Could not delete clothes.',
@@ -181,8 +181,18 @@ const createClothes = async (req, res, next) => {
       return next(error);
     }
 
+    if (!clothes) {
+      const error = new HttpError('Do not see clothes with this id.', 404);
+      return next(error);
+    }
+
     try {
-      await clothes.remove();
+      const sess = await mongoose.startSession();
+      sess.startTransaction();
+      await cloth.remove({ session: sess });
+      cloth.creator.clothes.pull(cloth);
+      await cloth.creator.save({ session: sess });
+      await sess.commitTransaction();
     } catch (err) {
       const error = new HttpError(
         'Could not delete clothes.',
