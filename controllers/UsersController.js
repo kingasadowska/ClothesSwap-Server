@@ -3,15 +3,6 @@ const { validationResult } = require('express-validator');
 const HttpError = require('../models/HttpErrors');
 const User = require('../models/user');
 
-const SAMPLE_USERS = [
-  {
-    id: 'u1',
-    name: 'Emma White',
-    email: 'emma@white.com',
-    password: '12345'
-  }
-];
-
 const getUsers = async (req, res, next) => {
   let users;
   try {
@@ -31,7 +22,7 @@ const signup = async (req, res, next) => {
   if (!errors.isEmpty()) {
     throw new HttpError('Check inputs, invalid data detected.', 422);
   }
-  const { name, email, password, clothes } = req.body;
+  const { name, email, password } = req.body;
   let existingUser
   try {
     existingUser = await User.findOne({ email: email })
@@ -56,7 +47,7 @@ const signup = async (req, res, next) => {
     email,
     image: 'https://content.asos-media.com/-/media/homepages/ww/2020/05/11/ww_global_mobile-hero_1650-x-1884_4th-may.jpg',
     password,
-    clothes
+    clothes: []
   });
 
   try {
