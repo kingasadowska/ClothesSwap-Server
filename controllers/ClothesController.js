@@ -4,6 +4,7 @@ const { validationResult } = require('express-validator');
 const HttpError = require('../models/HttpErrors');
 const getCoordination = require('../util/location');
 const Clothes = require('../models/clothes');
+const User = require('../models/user');
 
 let SAMPLE_CLOTHES = [
   {
@@ -76,7 +77,7 @@ const createClothes = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return next(
-    new HttpError('Invalid data, please check inputs.', 422));
+    new HttpError('Something is wrong, check inputs.', 422));
   }
 
   const { title, description, size, price, creator, address } = req.body;
@@ -99,82 +100,102 @@ const createClothes = async (req, res, next) => {
     creator
   });
 
- try {
-   await createdClothes.save();
- } catch (err) {
-   const error = new HttpError(
-     'Creating clothes failed!', 500
-     );
-     return next(error);
- }
-
-  res.status(201).json({ clothes: createdClothes });
-};
-
-const updateClothes = async (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    throw new HttpError('Invalid data, please check inputs.', 422);
-  }
-
-  const { title, description, size } = req.body;
-  const clothesId = req.params.cid;
-
-  let clothes;
+  let user;
   try {
-    clothes = await Clothes.findById(clothesId);
+    user = await User.findById(creator);
   } catch (err) {
-    const error = new HttpError(
-      'Could not update clothes.',
-      500
-    );
+    const error = new HttpError('Adding clothes failed..', 500);
     return next(error);
   }
 
-  clothes.title = title;
-  clothes.description = description;
-
-  try {
-    await clothes.save();
-  } catch (err) {
-    const error = new HttpError(
-      'Could not update clothes.',
-      500
-    );
-    return next(error);
-  }
-  res.status(200).json({ clothes: clothes.toObject({ getters: true }) });
-};
-
-const deleteClothes = async (req, res, next) => {
-  const clothesId = req.params.c.id;
-  
-  let clothes;
-  try {
-    clothes = await Clothes.findById(clothesId);
-  } catch (err) {
-    const error = new HttpError(
-      'Could not delete clothes.',
-      500
-    );
+  if (!user) {
+    const error = new HttpError('Can not find user with this id.', 404);
     return next(error);
   }
 
+  console.log(user);
+
   try {
-    await clothes.remove();
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await createdClothes.save({ session: sess });
+    user.clothes.push(createdClothes);
+    await user.save({ session: sess });
+    await sess.commitTransaction();
   } catch (err) {
     const error = new HttpError(
-      'Could not delete clothes.',
-      500
-    );
-    return next(error);
+      'Creating clothes failed!', 500
+      );
+      return next(error);
   }
 
-  res.status(200).json({ message: 'Deleted clothes!' });
-};
+    res.status(201).json({ clothes: createdClothes });
+  };
 
-exports.getClothesById = getClothesById;
-exports.getClothesByUserId = getClothesByUserId;
-exports.createClothes = createClothes;
-exports.updateClothes = updateClothes;
-exports.deleteClothes = deleteClothes;
+  const updateClothes = async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      throw new HttpError('Something is wrong, check inputs.', 422);
+    }
+
+    const { title, description, size } = req.body;
+    const clothesId = req.params.cid;
+
+    let clothes;
+    try {
+      clothes = await Clothes.findById(clothesId);
+    } catch (err) {
+      const error = new HttpError(
+        'Could not update clothes.',
+        500
+      );
+      return next(error);
+    }
+
+    clothes.title = title;
+    clothes.description = description;
+
+    try {
+      await clothes.save();
+    } catch (err) {
+      const error = new HttpError(
+        'Could not update clothes.',
+        500
+      );
+      return next(error);
+    }
+    res.status(200).json({ clothes: clothes.toObject({ getters: true }) });
+  };
+
+  const deleteClothes = async (req, res, next) => {
+    const clothesId = req.params.c.id;
+    
+    let clothes;
+    try {
+      clothes = await Clothes.findById(clothesId);
+    } catch (err) {
+      const error = new HttpError(
+        'Could not delete clothes.',
+        500
+      );
+      return next(error);
+    }
+
+    try {
+      await clothes.remove();
+    } catch (err) {
+      const error = new HttpError(
+        'Could not delete clothes.',
+        500
+      );
+      return next(error);
+    }
+
+    res.status(200).json({ message: 'Deleted clothes!' });
+  };
+
+  exports.getClothesById = getClothesById;
+  exports.getClothesByUserId = getClothesByUserId;
+  exports.createClothes = createClothes;
+  exports.updateClothes = updateClothes;
+  exports.deleteClothes = deleteClothes;
