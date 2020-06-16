@@ -1,33 +1,17 @@
 const uuid = require('uuid/v4');
 const { validationResult } = require('express-validator');
-
+const mongoose = require('mongoose');
 const HttpError = require('../models/HttpErrors');
 const getCoordination = require('../util/location');
 const Clothes = require('../models/clothes');
 const User = require('../models/user');
 
-let SAMPLE_CLOTHES = [
-  {
-    id: 'c1',
-    title: 'Dress',
-    description: 'short yellow',
-    size: 'S',
-    price: '15',
-    location: {
-      lat: 30.7387491,
-      lng: -52.6871527
-    },
-    address: '40th St, Boston, NY 20300',
-    creator: 'u1',
-  }
-];
-
 const getClothesById = async (req, res, next) => {
   const clothesId = req.params.cid;
 
-  let clothes;
+  let clothe;
   try {
-    clothes = await Clothes.findById(clothesId);
+    clothe = await Clothes.findById(clothesId);
   } catch (err) {
     const error = new HttpError(
       'Not found clothes.',
@@ -36,7 +20,7 @@ const getClothesById = async (req, res, next) => {
     return next(error);
   }
 
-  if (!clothes) {
+  if (!clothe) {
     const error = new HttpError(
       'Not found clothes with that id.',
       404
@@ -44,16 +28,16 @@ const getClothesById = async (req, res, next) => {
     return next(error);
   }
 
-  res.json({ clothes: clothes.toObject({ getters: true }) }); 
+  res.json({ clothe: clothe.toObject({ getters: true }) }); 
 };
 
 
 const getClothesByUserId = async (req, res, next) => {
   const userId = req.params.uid;
 
-  let clothes;
+  let userWithClothes;
   try {
-    clothes = await Clothes.find({ creator: userId });
+    userWithClothes = await User.findById(userId).populate('clothes');
   } catch (err) {
     const error = new HttpError(
       'Fetching clothes failed.',
@@ -62,15 +46,13 @@ const getClothesByUserId = async (req, res, next) => {
     return next(error);
   }
 
-  if (!clothes || clothes.length === 0) {
-    const error = new HttpError(
-      'Not found clothes fo that user id.',
-      404
+  if (!userWithClothes || userWithClothes.clothes.length === 0) {
+    return next(
+      new HttpError('Not found clothes fo that user id.',404)
     );
-    return next(error);
   }
 
-  res.json({ clothes: clothes.map(clothes => clothes.toObject({ getters: true })) });
+  res.json({ clothes: userWithClothes.clothes.map(clothe => clothe.toObject({ getters: true })) });
 };
 
 const createClothes = async (req, res, next) => {
@@ -92,7 +74,7 @@ const createClothes = async (req, res, next) => {
   const createdClothes = new Clothes({
     title,
     description,
-    imageUrl: 'https://content.asos-media.com/-/media/homepages/ww/2020/05/11/ww_global_mobile-hero_1650-x-1884_4th-may.jpg',
+    image: 'https://content.asos-media.com/-/media/homepages/ww/2020/05/11/ww_global_mobile-hero_1650-x-1884_4th-may.jpg',
     size,
     price,
     location: coordinates,
@@ -138,12 +120,12 @@ const createClothes = async (req, res, next) => {
       throw new HttpError('Something is wrong, check inputs.', 422);
     }
 
-    const { title, description, size } = req.body;
+    const { title, description, size, price } = req.body;
     const clothesId = req.params.cid;
 
-    let clothes;
+    let clothe;
     try {
-      clothes = await Clothes.findById(clothesId);
+      clothe = await Clothes.findById(clothesId);
     } catch (err) {
       const error = new HttpError(
         'Could not update clothes.',
@@ -152,11 +134,13 @@ const createClothes = async (req, res, next) => {
       return next(error);
     }
 
-    clothes.title = title;
-    clothes.description = description;
+    clothe.title = title;
+    clothe.description = description;
+    clothe.size = size;
+    clothe.price = price;
 
     try {
-      await clothes.save();
+      await clothe.save();
     } catch (err) {
       const error = new HttpError(
         'Could not update clothes.',
@@ -164,15 +148,15 @@ const createClothes = async (req, res, next) => {
       );
       return next(error);
     }
-    res.status(200).json({ clothes: clothes.toObject({ getters: true }) });
+    res.status(200).json({ clothe: clothe.toObject({ getters: true }) });
   };
 
   const deleteClothes = async (req, res, next) => {
-    const clothesId = req.params.c.id;
+    const clothesId = req.params.cid;
     
-    let clothes;
+    let clothe;
     try {
-      clothes = await Clothes.findById(clothesId).populate('creator');
+      clothe = await Clothes.findById(clothesId).populate('creator');
     } catch (err) {
       const error = new HttpError(
         'Could not delete clothes.',
@@ -181,7 +165,7 @@ const createClothes = async (req, res, next) => {
       return next(error);
     }
 
-    if (!clothes) {
+    if (!clothe) {
       const error = new HttpError('Do not see clothes with this id.', 404);
       return next(error);
     }
@@ -189,9 +173,9 @@ const createClothes = async (req, res, next) => {
     try {
       const sess = await mongoose.startSession();
       sess.startTransaction();
-      await cloth.remove({ session: sess });
-      cloth.creator.clothes.pull(cloth);
-      await cloth.creator.save({ session: sess });
+      await clothe.remove({ session: sess });
+      clothe.creator.clothes.pull(clothe);
+      await clothe.creator.save({ session: sess });
       await sess.commitTransaction();
     } catch (err) {
       const error = new HttpError(

@@ -16,7 +16,7 @@ router.post(
         check('email')
           .normalizeEmail()
           .isEmail(),
-        check('password').isLength({ min: 5 })
+        check('password').isLength({ min: 6 })
     ],
     usersController.signup
 );

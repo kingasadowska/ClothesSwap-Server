@@ -13,8 +13,11 @@ router.post('/',
     check('title')
       .not()
       .isEmpty(),
-    check('description').isLength({ min: 5 }),
+    check('description').isLength({ min: 6 }),
     check('size')
+      .not()
+      .isEmpty(),
+    check('price')
       .not()
       .isEmpty(),
     check('address')
@@ -30,7 +33,13 @@ router.patch(
         check('title')
           .not()
           .isEmpty(),
-        check('description').isLength({ min: 6 })
+        check('description').isLength({ min: 6 }),
+        check('size')
+        .not()
+        .isEmpty(),
+        check('price')
+        .not()
+        .isEmpty(),
     ],
     clothesControllers.updateClothes
 );

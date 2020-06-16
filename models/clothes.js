@@ -8,12 +8,12 @@ const clothesSchema = new Schema ({
     image: {type: String, required: true},
     size: {type: String, required: true},
     price: {type: String, required: true},
+    address: {type: String, required: true},
     location: {
         lat: {type: Number, required: true},
         lng: {type: Number, required: true},
     },
-    creator: { type: mongoose.Types.ObjectId, required: true, ref: 'User'},
-    address: {type: String, required: true}
+    creator: { type: mongoose.Types.ObjectId, required: true, ref: 'User'}
 });
 
 module.exports = mongoose.model('Clothes', clothesSchema);

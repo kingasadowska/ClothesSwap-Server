@@ -1,4 +1,3 @@
-const uuid = require('uuid/v4');
 const { validationResult } = require('express-validator');
 const HttpError = require('../models/HttpErrors');
 const User = require('../models/user');
@@ -23,6 +22,7 @@ const signup = async (req, res, next) => {
     throw new HttpError('Check inputs, invalid data detected.', 422);
   }
   const { name, email, password } = req.body;
+
   let existingUser
   try {
     existingUser = await User.findOne({ email: email })
@@ -86,7 +86,10 @@ const login = async(req, res, next) => {
     return next(error);
   }
 
-  res.json({text: 'Success!'});
+  res.json(
+    {message: 'Success!',
+    user: existingUser.toObject({ getters: true })
+  });
 };
 
 exports.getUsers = getUsers;
