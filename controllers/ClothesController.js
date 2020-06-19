@@ -1,4 +1,4 @@
-const uuid = require('uuid/v4');
+const fs = require('fs');
 const { validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 const HttpError = require('../models/HttpErrors');
@@ -74,7 +74,7 @@ const createClothes = async (req, res, next) => {
   const createdClothes = new Clothes({
     title,
     description,
-    image: 'https://content.asos-media.com/-/media/homepages/ww/2020/05/11/ww_global_mobile-hero_1650-x-1884_4th-may.jpg',
+    image: req.file.path,
     size,
     price,
     location: coordinates,
@@ -117,7 +117,9 @@ const createClothes = async (req, res, next) => {
   const updateClothes = async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      throw new HttpError('Something is wrong, check inputs.', 422);
+      return next(
+        new HttpError('Something is wrong, check inputs.', 422)
+      );
     }
 
     const { title, description, size, price } = req.body;
@@ -170,6 +172,8 @@ const createClothes = async (req, res, next) => {
       return next(error);
     }
 
+    const imagePath = place.image;
+
     try {
       const sess = await mongoose.startSession();
       sess.startTransaction();
@@ -184,6 +188,10 @@ const createClothes = async (req, res, next) => {
       );
       return next(error);
     }
+
+    fs.unlink(imagePath, err => {
+      console.log(err);
+    });
 
     res.status(200).json({ message: 'Deleted clothes!' });
   };

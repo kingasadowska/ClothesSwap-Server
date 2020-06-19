@@ -19,8 +19,11 @@ const getUsers = async (req, res, next) => {
 const signup = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    throw new HttpError('Check inputs, invalid data detected.', 422);
+    return next(
+     new HttpError('Check inputs, invalid data detected.', 422)
+    );
   }
+
   const { name, email, password } = req.body;
 
   let existingUser
@@ -45,7 +48,7 @@ const signup = async (req, res, next) => {
   const createdUser = new User({
     name,
     email,
-    image: 'https://content.asos-media.com/-/media/homepages/ww/2020/05/11/ww_global_mobile-hero_1650-x-1884_4th-may.jpg',
+    image: req.file.path,
     password,
     clothes: []
   });
