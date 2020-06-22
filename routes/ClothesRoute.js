@@ -2,11 +2,14 @@ const express = require('express');
 const { check } = require('express-validator');
 const clothesControllers = require('../controllers/ClothesController');
 const uploadFile = require('../middleware/UploadFile');
+const checkAuth = require('../middleware/CheckAuth');
 const router = express.Router();
 
 router.get('/:cid', clothesControllers.getClothesById);
 
 router.get('/user/:uid', clothesControllers.getClothesByUserId);
+
+router.use(checkAuth);
 
 router.post(
   '/',
