@@ -136,6 +136,13 @@ const createClothes = async (req, res, next) => {
       return next(error);
     }
 
+    if (clothe.creator.toString() !== req.userData.userId) {
+      const error = new HttpError(
+        'Not allow to edit this clothes.', 401
+      );
+      return next(error);
+    }
+
     clothe.title = title;
     clothe.description = description;
     clothe.size = size;
@@ -169,6 +176,13 @@ const createClothes = async (req, res, next) => {
 
     if (!clothe) {
       const error = new HttpError('Do not see clothes with this id.', 404);
+      return next(error);
+    }
+
+    if (clothe.creator.id !== req.userData.userId) {
+      const error = new HttpError(
+        'Not allow to delete this clothes.', 403
+      );
       return next(error);
     }
 
