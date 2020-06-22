@@ -52,7 +52,9 @@ const getClothesByUserId = async (req, res, next) => {
     );
   }
 
-  res.json({ clothes: userWithClothes.clothes.map(clothe => clothe.toObject({ getters: true })) });
+  res.json({ clothes: userWithClothes.clothes.map(clothe => 
+    clothe.toObject({ getters: true })) 
+  });
 };
 
 const createClothes = async (req, res, next) => {
@@ -79,7 +81,7 @@ const createClothes = async (req, res, next) => {
     price,
     location: coordinates,
     address,
-    creator
+    creator: req.userData.userId
   });
 
   let user;
@@ -181,7 +183,7 @@ const createClothes = async (req, res, next) => {
 
     if (clothe.creator.id !== req.userData.userId) {
       const error = new HttpError(
-        'Not allow to delete this clothes.', 403
+        'Not allow to delete this clothes.', 401
       );
       return next(error);
     }

@@ -1,7 +1,8 @@
 const { validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const HttpError = require('../models/HttpErrors');
 const User = require('../models/user');
-const bcrypt = require('bcryptjs');
 
 const getUsers = async (req, res, next) => {
   let users;
@@ -27,7 +28,7 @@ const signup = async (req, res, next) => {
 
   const { name, email, password } = req.body;
 
-  let existingUser
+  let existingUser;
   try {
     existingUser = await User.findOne({ email: email })
   } catch (err) {
@@ -61,7 +62,7 @@ const signup = async (req, res, next) => {
     name,
     email,
     image: req.file.path,
-    password,
+    password: hashedPassword,
     clothes: []
   });
 
@@ -90,7 +91,9 @@ const signup = async (req, res, next) => {
   return next(error);
 }
 
-  res.status(201).json({
+  res
+  .status(201)
+  .json({
     userId: createdUser.id, 
     email: createdUser.email, 
     token: token
@@ -112,10 +115,10 @@ const login = async(req, res, next) => {
     return next(error);
   }
 
-  if (!existingUser || existingUser.password !== password) {
+  if (!existingUser) {
     const error = new HttpError(
       'Failed login, check your credentials.',
-      401
+      403
     );
     return next(error);
   }
@@ -131,7 +134,7 @@ const login = async(req, res, next) => {
   
   if (!isValidPassword) {
     const error = new HttpError(
-      'Invalid credentials', 401
+      'Invalid credentials', 403
     );
     return next(error);
   }
