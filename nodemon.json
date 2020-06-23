@@ -1,0 +1,9 @@
+{
+    "env": {
+        "DB_USER": "admin1",
+        "DB_PASSWORD": "12345",
+        "DB_NAME": "clothes",
+        "GOOGLE_API_KEY": "AIzaSyDHHmOOShpIEdHJ-3vwP87k7BKU_7DcrMc",
+        "JWT_KEY": "supersecret_dont_share"
+    }
+}
