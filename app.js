@@ -46,8 +46,15 @@ app.use((error, req, res, next) => {
   res.json({ message: error.message || 'Error occurred!' });
 });
 
+
+
 mongoose
-  .connect('mongodb+srv://admin1:12345@cluster0-mudkp.mongodb.net/clothes?retryWrites=true&w=majority')
+  .connect('mongodb+srv://admin1:12345@cluster0-mudkp.mongodb.net/clothes?retryWrites=true&w=majority',
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true 
+  })
   .then(() => {
     app.listen(5000);
   })

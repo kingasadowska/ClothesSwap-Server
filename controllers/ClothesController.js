@@ -76,17 +76,17 @@ const createClothes = async (req, res, next) => {
   const createdClothes = new Clothes({
     title,
     description,
-    image: req.file.path,
     size,
     price,
     location: coordinates,
     address,
+    image: req.file.path,
     creator: req.userData.userId
   });
 
   let user;
   try {
-    user = await User.findById(creator);
+    user = await User.findById(req.userData.userId);
   } catch (err) {
     const error = new HttpError('Adding clothes failed..', 500);
     return next(error);
